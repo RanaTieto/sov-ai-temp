@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg17
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "postgres"
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgvector-secret
+                  key: postgres_password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: persistent-volume
+              mountPath: /var/lib/postgresql/data
+              subPath: data/database_data/postgres
+        - name: adminer
+          image: adminer:4.8.1-standalone
+          ports:
+            - containerPort: 8080
+      volumes:
+        - name: persistent-volume
+          persistentVolumeClaim:
+            claimName: persistent-volume-claim

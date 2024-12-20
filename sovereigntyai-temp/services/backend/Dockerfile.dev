@@ -1,0 +1,14 @@
+# 1. Builder stage
+FROM python:3.12.7-slim AS builder
+WORKDIR /backend/build
+COPY services/backend/requirements.txt .
+RUN pip install --default-timeout=600 --no-cache-dir -r requirements.txt
+
+# 2. Final stage
+FROM python:3.12.7-slim
+WORKDIR /backend/src
+ENV ENVIRONMENT=development
+ENV PYTHONPATH="/shared:$PYTHONPATH"
+EXPOSE 8000
+COPY --from=builder /usr/local /usr/local
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

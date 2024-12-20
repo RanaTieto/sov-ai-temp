@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm
+  namespace: sovereignty-ai-dev
+spec:
+  selector:
+    matchLabels:
+      name: llm
+  template:
+    metadata:
+      labels:
+        name: llm
+    spec:
+      containers:
+      - name: llm
+        #image: image-registry.openshift-image-registry.svc:5000/sovereignty-ai-dev/ollama-image:latest
+        image: ollama/ollama:0.4.7
+        ports:
+        - name: http
+          containerPort: 11434
+          protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /.ollama
+          name: persistent-volume
+          subPath: data/llm_data/ollama
+      - name: open-webui
+        image: dyrnq/open-webui@sha256:de5d58daf875e0df88fbfe3ee5f672a1dc482d9e394f19578ca097fffccc19f8
+#        image: dyrnq/open-webui:git-fe19f12
+        ports:
+          - containerPort: 8080
+        env:
+          - name: OLLAMA_BASE_URL
+            value: "http://llm-service.sovereignty-ai-dev.svc.cluster.local:11434"
+          - name: OLLAMA_HOST
+            value: "0.0.0.0"
+          - name: WEBUI_SECRET_KEY
+            value: abc
+          - name: HTTP_PROXY
+            value: http://10.29.3.4:3128
+          - name: http_proxy
+            value: http://10.29.3.4:3128
+          - name: HTTPS_PROXY
+            value: http://10.29.3.4:3128
+          - name: https_proxy
+            value: http://10.29.3.4:3128
+          - name: NO_PROXY
+            value: .cluster.local,.svc,10.0.0.0/16,10.128.0.0/14,10.29.3.0/24,127.0.0.1,172.30.0.0/16,api-int.openshift-bmaas.int.tietoevry.com,localhost,openshift-bmaas.int.tietoevry.com
+          - name: no_proxy
+            value: .cluster.local,.svc,10.0.0.0/16,10.128.0.0/14,10.29.3.0/24,127.0.0.1,172.30.0.0/16,api-int.openshift-bmaas.int.tietoevry.com,localhost,openshift-bmaas.int.tietoevry.com
+#        restartPolicy: Always
+        volumeMounts:
+          - mountPath: /app/backend/data
+            name: persistent-volume
+            subPath: data/llm_data/open_webui
+      volumes:
+      - name: persistent-volume
+        persistentVolumeClaim:
+          claimName: persistent-volume-claim
+  strategy:
+    type: Recreate

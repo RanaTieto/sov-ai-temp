@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: data-processor-route
+  namespace: sovereignty-ai-dev
+spec:
+  to:
+    kind: Service
+    name: data-processor-service
+  port:
+    targetPort: 8000
+  wildcardPolicy: None

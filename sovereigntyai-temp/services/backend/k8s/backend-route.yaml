@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: backend-route
+  namespace: sovereignty-ai-dev
+spec:
+  to:
+    kind: Service
+    name: backend-service
+  port:
+    targetPort: 8000
+  wildcardPolicy: None

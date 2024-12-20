@@ -1,0 +1,16 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: backend-build
+  namespace: sovereignty-ai-dev
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: backend/Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: backend:latest

@@ -1,0 +1,24 @@
+###############################################################################
+#                         Development configuration                           #
+###############################################################################
+
+persistent-volume:
+  logging: /shared_data/logs
+  embeddings_hf_home: /embeddings_data/hf_home
+  data_directory: /shared_data/rag_content/vero_fi_english
+
+file_logger:
+  level: DEBUG  # DEBUG | INFO | WARNING | ERROR
+
+postgres_database_manager:
+  type: PostgresDatabaseManager
+  host: database-service
+  port: 5432
+  database_name: postgres
+  user: admin
+
+langchain_llm_client:
+  ollama_url: http://llm-service.sovereignty-ai-dev.svc.cluster.local:11434
+
+langchain_embedding_provider:
+  api_url: http://embeddings-route-sovereignty-ai-dev.apps.openshift-bmaas.int.tietoevry.com

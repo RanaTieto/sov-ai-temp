@@ -1,0 +1,11 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: data-processor
+  namespace: sovereignty-ai-dev
+spec:
+  tags:
+    - name: latest
+      from:
+        kind: DockerImage
+        name: "image-registry.openshift-image-registry.svc:5000/sovereignty-ai-dev/data-processor:latest"

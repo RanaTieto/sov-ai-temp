@@ -1,0 +1,9 @@
+# required by ConfigurationManager
+PyYaml==6.0.2
+
+# service dependencies
+uvicorn==0.32.0
+fastapi==0.115.4
+pydantic==2.9.2
+sentence-transformers==3.2.1
+torch==2.5.1

@@ -1,0 +1,12 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: open-webui-route
+  namespace: sovereignty-ai-dev
+spec:
+  to:
+    kind: Service
+    name: open-webui-service
+  port:
+    targetPort: 8080
+  wildcardPolicy: None

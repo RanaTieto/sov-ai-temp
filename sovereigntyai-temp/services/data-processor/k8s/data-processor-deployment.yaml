@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processor
+  namespace: sovereignty-ai-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-processor
+  template:
+    metadata:
+      labels:
+        app: data-processor
+    spec:
+      containers:
+        - name: data-processor
+          image: image-registry.openshift-image-registry.svc:5000/sovereignty-ai-dev/data-processor:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgvector-secret
+                  key: postgres_password
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: groq-secret
+                  key: groq_api_key
+            - name: ENVIRONMENT
+              value: "development"
+            - name: PYTHONPATH
+              value: "/backend_data/site_packages"
+            - name: HTTP_PROXY
+              value: http://10.29.3.4:3128
+            - name: http_proxy
+              value: http://10.29.3.4:3128
+            - name: HTTPS_PROXY
+              value: http://10.29.3.4:3128
+            - name: https_proxy
+              value: http://10.29.3.4:3128
+            - name: NO_PROXY
+              value: .cluster.local,.svc,10.0.0.0/16,10.128.0.0/14,10.29.3.0/24,127.0.0.1,172.30.0.0/16,api-int.openshift-bmaas.int.tietoevry.com,localhost,openshift-bmaas.int.tietoevry.com
+            - name: no_proxy
+              value: .cluster.local,.svc,10.0.0.0/16,10.128.0.0/14,10.29.3.0/24,127.0.0.1,172.30.0.0/16,api-int.openshift-bmaas.int.tietoevry.com,localhost,openshift-bmaas.int.tietoevry.com
+          volumeMounts:
+            - mountPath: /data-processor_data
+              name: persistent-volume
+              subPath: data/data-processor_data
+            - mountPath: /shared_data
+              name: persistent-volume
+              subPath: data/shared_data
+      restartPolicy: Always
+      volumes:
+      - name: persistent-volume
+        persistentVolumeClaim:
+          claimName: persistent-volume-claim
+  strategy:
+    type: Recreate

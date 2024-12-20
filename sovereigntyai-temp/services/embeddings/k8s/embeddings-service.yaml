@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: embeddings-service
+  namespace: sovereignty-ai-dev
+spec:
+  selector:
+    app: embeddings
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

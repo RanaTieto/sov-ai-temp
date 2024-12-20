@@ -1,0 +1,16 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: data-processor-build
+  namespace: sovereignty-ai-dev
+spec:
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: data-processor/Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: data-processor:latest

@@ -1,0 +1,184 @@
+
+networks:
+  default-network:
+    driver: bridge
+
+services:
+
+  database:
+    container_name: database
+    read_only: true
+    image: pgvector/pgvector:pg17
+    hostname: database
+    networks:
+      - default-network
+    ports:
+      - 7000:5432
+    environment:
+      - ENVIRONMENT=local
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./persistent-volume/data/database_data/postgres:/var/lib/postgresql/data
+    tmpfs:
+      - /var/run/postgresql
+    restart: no
+
+
+  adminer:
+    container_name: adminer
+    image: adminer:4.8.1-standalone
+    networks:
+      - default-network
+    ports:
+      - 7001:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=database
+      - ADMINER_DEFAULT_DB=postgres
+      - ADMINER_DEFAULT_USER=admin
+      - ADMINER_DEFAULT_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./persistent-volume/data/database_data/adminer:/var/lib/adminer
+    restart: no
+    depends_on:
+      - database
+
+
+  llm:
+    container_name: llm
+    read_only: true
+    image: ollama/ollama:0.4.7
+    hostname: llm
+    networks:
+      - default-network
+    ports:
+      - 7002:11434
+    environment:
+      - ENVIRONMENT=local
+    volumes:
+      - ./persistent-volume/data/llm_data/ollama:/root/.ollama
+    restart: no
+
+
+  open-webui:
+    container_name: open-webui
+#    read_only: true
+    image: dyrnq/open-webui:git-fe19f12
+    hostname: open-webui
+    networks:
+      - default-network
+    ports:
+      - 7003:8080
+    environment:
+      - OLLAMA_BASE_URL=http://llm:11434
+      - OLLAMA_HOST=0.0.0.0
+      - WEBUI_SECRET_KEY=abc
+    volumes:
+      - ./persistent-volume/data/llm_data/open_webui:/app/backend/data
+    restart: no
+    depends_on:
+      - llm
+
+
+  embeddings:
+    container_name: embeddings
+    read_only: true
+    image: embeddings:latest
+    hostname: embeddings
+    build:
+      context: .
+      dockerfile: services/embeddings/Dockerfile.dev
+    environment:
+      - ENVIRONMENT=local
+    networks:
+      - default-network
+    ports:
+      - 7004:8000
+    volumes:
+      - ./services/embeddings:/embeddings
+      - ./services/shared:/shared
+      - ./persistent-volume/data/embeddings_data:/embeddings_data
+      - ./persistent-volume/data/shared_data:/shared_data
+    restart: no
+
+
+  data-processor:
+    container_name: data-processor
+    read_only: true
+    image: data-processor:latest
+    hostname: data-processor
+    build:
+      context: .
+      dockerfile: services/data-processor/Dockerfile.dev
+    environment:
+      - ENVIRONMENT=local
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    networks:
+      - default-network
+    ports:
+      - 7005:8000
+    volumes:
+      - ./services/data-processor:/data-processor
+      - ./services/shared:/shared
+      - ./persistent-volume/data/data-processor_data:/data-processor_data
+      - ./persistent-volume/data/shared_data:/shared_data
+    restart: no
+    depends_on:
+      - database
+      - llm
+      - embeddings
+
+
+  backend:
+    container_name: backend
+    read_only: true
+    image: backend:latest
+    hostname: backend
+    build:
+      context: .
+      dockerfile: services/backend/Dockerfile.dev
+    environment:
+      - ENVIRONMENT=local
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    networks:
+      - default-network
+    ports:
+      - 7006:8000
+    volumes:
+      - ./services/backend:/backend
+      - ./services/shared:/shared
+      - ./persistent-volume/data/backend_data:/backend_data
+      - ./persistent-volume/data/shared_data:/shared_data
+    restart: no
+    depends_on:
+      - database
+      - llm
+      - embeddings
+
+
+  frontend:
+    container_name: frontend
+    read_only: true
+    image: frontend:latest
+    hostname: frontend
+    build:
+      context: .
+      dockerfile: services/frontend/Dockerfile.dev
+    environment:
+      - ENVIRONMENT=local
+    networks:
+      - default-network
+    ports:
+      - 7007:3000
+    volumes:
+      - ./frontend:/app
+    restart: no
+    depends_on:
+      - database
+      - llm
+      - embeddings
+      - backend
